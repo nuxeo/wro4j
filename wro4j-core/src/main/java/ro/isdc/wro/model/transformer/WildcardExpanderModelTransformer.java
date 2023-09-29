@@ -76,8 +76,7 @@ public class WildcardExpanderModelTransformer
   /**
    * {@inheritDoc}
    */
-  public synchronized WroModel transform(final WroModel input) {
-    final WroModel model = input;
+  public synchronized WroModel transform(final WroModel model) {
 
     for (final Group group : model.getGroups()) {
       final List<Resource> resources = group.getResources();
@@ -191,8 +190,24 @@ public class WildcardExpanderModelTransformer
             final String resourcePath = getFullPathNoEndSeparator(resource);
             LOG.debug("\tresourcePath: {}", resourcePath);
             LOG.debug("\tfile path: {}", file.getPath());
-            final String computedResourceUri = resourcePath
-                + StringUtils.removeStart(file.getPath(), baseNameFolder).replace('\\', '/');
+
+            String filePath = file.getPath();
+            String resourcePathWithoutProtocol;
+            final String computedResourceUri;
+
+            if (resourcePath.startsWith("classpath:")) {
+              resourcePathWithoutProtocol = resourcePath.replaceFirst("classpath:", StringUtils.EMPTY);
+            }
+            else {
+              resourcePathWithoutProtocol = baseNameFolder;
+            }
+
+            if (StringUtils.isEmpty(resourcePathWithoutProtocol)) {
+              computedResourceUri = resourcePath + filePath;
+            }
+            else {
+              computedResourceUri = resourcePath + filePath.replaceFirst(".*" + resourcePathWithoutProtocol, "");
+            }
 
             final Resource expandedResource = Resource.create(computedResourceUri, resource.getType());
             LOG.debug("\texpanded resource: {}", expandedResource);
